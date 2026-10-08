@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Hub Pitch</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slide { width: 100vw; height: 100vh; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+
+  /* TOP BAR */
+  .top-bar {
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 0 32px; display: flex; align-items: center;
+    justify-content: space-between; height: 52px; flex-shrink: 0;
+  }
+  .top-bar-left { display: flex; align-items: center; gap: 10px; }
+  .hub-logo {
+    width: 28px; height: 28px; background: #3b82d4; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .hub-name { font-size: 14px; font-weight: 700; color: #e6edf3; }
+  .hub-sub  { font-size: 11px; color: #8b949e; margin-left: 4px; }
+  .tab-nav  { display: flex; gap: 2px; }
+  .tab-btn {
+    background: none; border: none; color: #8b949e; font-size: 12px;
+    font-weight: 500; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    transition: all 0.18s; white-space: nowrap;
+  }
+  .tab-btn:hover  { background: #21262d; color: #e6edf3; }
+  .tab-btn.active { background: #3b82d4; color: #fff; font-weight: 600; }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: #0f2d1a; border: 1px solid #238636;
+    border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 600; color: #3fb950;
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #3fb950;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* PANELS */
+  .panels { position: relative; overflow: hidden; }
+  .panel {
+    position: absolute; inset: 0; padding: 18px 28px 14px;
+    opacity: 0; transform: translateY(10px); pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease; overflow-y: auto;
+  }
+  .panel.active { opacity: 1; transform: translateY(0); pointer-events: all; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .panel-header h3 { font-size: 16px; font-weight: 700; color: #e6edf3; }
+  .panel-header p  { font-size: 11px; color: #8b949e; margin-top: 2px; }
+
+  /* ─── OVERVIEW ─── */
+  .ov-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto; gap: 12px; height: calc(100% - 0px);
+  }
+  .ov-hero {
+    grid-column: 1/3; background: #161b22; border: 1px solid #30363d;
+    border-radius: 10px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: center;
+  }
+  .ov-hero .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #3b82d4; margin-bottom: 8px; }
+  .ov-hero h2 { font-size: 22px; font-weight: 800; line-height: 1.2; color: #e6edf3; margin-bottom: 10px; }
+  .ov-hero h2 span { color: #3b82d4; }
+  .ov-hero p { font-size: 12px; color: #8b949e; line-height: 1.6; max-width: 380px; }
+  .ov-status {
+    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+    padding: 18px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .st-label { font-size: 10px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+  .st-val   { font-size: 28px; font-weight: 800; color: #3fb950; }
+  .st-sub   { font-size: 11px; color: #8b949e; margin-top: 4px; }
+  .progress-bar  { height: 6px; background: #21262d; border-radius: 3px; margin-top: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: #3b82d4; transition: width 1.2s cubic-bezier(.4,0,.2,1); width: 0; }
+  .pillar-card {
+    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+    padding: 16px; cursor: pointer; transition: border-color .2s, transform .2s;
+    position: relative; overflow: hidden;
+  }
+  .pillar-card::before {
+    content:''; position: absolute; top:0; left:0; right:0; height:3px; border-radius: 10px 10px 0 0;
+  }
+  .pillar-card.p1::before { background: #3b82d4; }
+  .pillar-card.p2::before { background: #7c5cd8; }
+  .pillar-card.p3::before { background: #1f9e6e; }
+  .pillar-card:hover { border-color: #58a6ff; transform: translateY(-2px); }
+  .pillar-card .pc-icon { font-size: 22px; margin-bottom: 8px; }
+  .pillar-card h4 { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 5px; }
+  .pillar-card p  { font-size: 11px; color: #8b949e; line-height: 1.5; }
+  .pillar-card .pc-arrow { position: absolute; bottom:12px; right:14px; font-size:11px; color:#3b82d4; font-weight:700; opacity:0; transition: opacity .2s; }
+  .pillar-card:hover .pc-arrow { opacity: 1; }
+  .metric-strip { grid-column: 1/4; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .metric-box {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+  }
+  .mb-val  { font-size: 26px; font-weight: 800; color: #3b82d4; flex-shrink: 0; }
+  .mb-desc { font-size: 11px; color: #8b949e; line-height: 1.4; }
+
+  /* ─── CHALLENGE ─── */
+  .ps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ps-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; }
+  .ps-card.prob { border-top: 3px solid #e5534b; }
+  .ps-card.soln { border-top: 3px solid #3b82d4; }
+  .ps-card h3  { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+  .ps-card.prob h3 { color: #e5534b; }
+  .ps-card.soln h3 { color: #3b82d4; }
+  .ps-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 6px; border-bottom: 1px solid #21262d;
+    cursor: default; border-radius: 4px; transition: background .15s;
+  }
+  .ps-item:last-child { border-bottom: none; }
+  .ps-item:hover { background: #21262d; }
+  .ps-item .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .ps-item .text { font-size: 12px; color: #c9d1d9; line-height: 1.45; }
+
+  /* ─── DOCUMENTS ─── */
+  .doc-grid { display: grid; grid-template-columns: 200px 1fr; gap: 14px; }
+  .doc-cats { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px; height: fit-content; }
+  .doc-cats h4 { font-size: 11px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+  .cat-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background .15s; margin-bottom: 2px;
+  }
+  .cat-item:hover, .cat-item.active { background: #21262d; }
+  .cat-item.active { background: #1c2a3e; }
+  .cat-left { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c9d1d9; }
+  .cat-count { font-size: 10px; background: #30363d; color: #8b949e; border-radius: 10px; padding: 1px 7px; font-weight: 600; }
+  .doc-list  { display: flex; flex-direction: column; gap: 8px; }
+  .doc-item  {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    padding: 12px 16px; display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: border-color .18s, background .18s;
+  }
+  .doc-item:hover { border-color: #58a6ff; background: #1c2a3e; }
+  .doc-icon { font-size: 20px; flex-shrink: 0; }
+  .doc-info .di-name { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 2px; }
+  .doc-info .di-meta { font-size: 11px; color: #8b949e; }
+  .doc-tag   { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .tag-new    { background: #0f2d1a; color: #3fb950; border: 1px solid #238636; }
+  .tag-updated{ background: #1c2a3e; color: #58a6ff; border: 1px solid #3b82d4; }
+  .tag-review { background: #2d1b00; color: #f0883e; border: 1px solid #9e6a03; }
+
+  /* ─── COMMS ─── */
+  .comms-grid { display: grid; grid-template-columns: 200px 1fr; gap: 14px; }
+  .channel-list { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px; height: fit-content; }
+  .channel-list h4 { font-size: 11px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+  .ch-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background .15s; margin-bottom: 2px;
+  }
+  .ch-item:hover, .ch-item.active { background: #21262d; }
+  .ch-item.active { background: #1c2a3e; }
+  .ch-name  { font-size: 12px; color: #c9d1d9; display: flex; align-items: center; gap: 6px; }
+  .ch-badge { background: #3b82d4; color: #fff; font-size: 9px; font-weight: 700; border-radius: 10px; padding: 1px 6px; }
+  .chat-area { background: #161b22; border: 1px solid #30363d; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; max-height: 360px; }
+  .chat-header { padding: 12px 16px; border-bottom: 1px solid #30363d; font-size: 13px; font-weight: 700; color: #e6edf3; }
+  .chat-messages { flex: 1; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+  .msg { display: flex; gap: 10px; }
+  .msg-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .msg-body .msg-meta  { font-size: 11px; margin-bottom: 3px; }
+  .msg-body .msg-author{ font-weight: 700; color: #e6edf3; }
+  .msg-body .msg-time  { color: #8b949e; margin-left: 6px; }
+  .msg-body .msg-text  { font-size: 12px; color: #c9d1d9; line-height: 1.5; }
+  .msg-attachment {
+    margin-top: 6px; background: #21262d; border: 1px solid #30363d;
+    border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #8b949e;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  /* ─── ROADMAP ─── */
+  .phase-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
+  .phase-card {
+    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+    padding: 18px; cursor: pointer; transition: border-color .2s, transform .18s;
+  }
+  .phase-card:hover { border-color: #3b82d4; transform: translateY(-2px); }
+  .ph-badge {
+    font-size: 10px; font-weight: 700; background: #1c2a3e; color: #58a6ff;
+    border: 1px solid #3b82d4; border-radius: 4px; padding: 2px 8px;
+    display: inline-block; margin-bottom: 10px;
+  }
+  .phase-card h4 { font-size: 14px; font-weight: 700; color: #e6edf3; margin-bottom: 10px; }
+  .phase-card ul  { padding-left: 14px; }
+  .phase-card ul li { font-size: 12px; color: #8b949e; margin-bottom: 5px; line-height: 1.4; }
+  .phase-bar  { height: 4px; background: #21262d; border-radius: 2px; margin-top: 14px; overflow: hidden; }
+  .phase-fill { height: 100%; border-radius: 2px; background: #3b82d4; transition: width 1.4s cubic-bezier(.4,0,.2,1) .3s; width: 0; }
+  .timeline { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px 20px; }
+  .tl-label { font-size: 11px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
+  .tl-row   { display: flex; align-items: center; }
+  .tl-item  { flex: 1; text-align: center; position: relative; }
+  .tl-item::after {
+    content:''; position: absolute; top: 11px; left: 50%; right: -50%;
+    height: 2px; background: #30363d; z-index: 0;
+  }
+  .tl-item:last-child::after { display: none; }
+  .tl-dot {
+    width: 22px; height: 22px; border-radius: 50%; background: #30363d; border: 2px solid #30363d;
+    margin: 0 auto 6px; position: relative; z-index: 1; transition: background .3s, border-color .3s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tl-dot.done   { background: #3b82d4; border-color: #3b82d4; }
+  .tl-dot.done::after  { content: '✓'; font-size: 10px; color: #fff; font-weight: 700; }
+  .tl-dot.active { background: #161b22; border-color: #3b82d4; box-shadow: 0 0 0 3px rgba(59,130,212,.25); }
+  .tl-dot.active::after { content:''; width: 8px; height: 8px; background: #3b82d4; border-radius: 50%; }
+  .tl-week { font-size: 10px; color: #8b949e; }
+  .tl-name { font-size: 10px; color: #c9d1d9; font-weight: 600; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="hub-logo">PH</div>
+      <span class="hub-name">Project Hub</span>
+      <span class="hub-sub">— Alpha Programme</span>
+    </div>
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
+      <button class="tab-btn" onclick="showTab('problem')">Challenge</button>
+      <button class="tab-btn" onclick="showTab('docs')">Documents</button>
+      <button class="tab-btn" onclick="showTab('comms')">Communication</button>
+      <button class="tab-btn" onclick="showTab('roadmap')">Roadmap</button>
+    </div>
+    <div class="status-pill"><span class="status-dot"></span>On Track</div>
+  </div>
+
+  <!-- PANELS -->
+  <div class="panels">
+
+    <!-- OVERVIEW -->
+    <div class="panel active" id="panel-overview">
+      <div class="ov-grid">
+        <div class="ov-hero">
+          <div class="eyebrow">Solution Pitch</div>
+          <h2>One <span>Visible &amp; Controlled</span> Home<br>for All Project Information</h2>
+          <p>A single Project Hub that increases visibility, centralises all documents, and establishes clear communication channels — so your team always knows exactly where to look.</p>
+        </div>
+        <div class="ov-status">
+          <div>
+            <div class="st-label">Project Health</div>
+            <div class="st-val">On Track</div>
+            <div class="st-sub">Milestone 3 of 5 complete</div>
+          </div>
+          <div>
+            <div class="st-sub" style="margin-bottom:4px;">Overall Progress</div>
+            <div class="progress-bar"><div class="progress-fill" id="main-progress"></div></div>
+            <div class="st-sub" style="margin-top:5px;color:#3b82d4;">60% Complete</div>
+          </div>
+        </div>
+        <div class="pillar-card p1" onclick="showTab('docs')">
+          <div class="pc-icon">🔍</div>
+          <h4>Increased Visibility</h4>
+          <p>Live dashboards and status boards give every stakeholder a real-time view of project health.</p>
+          <span class="pc-arrow">View →</span>
+        </div>
+        <div class="pillar-card p2" onclick="showTab('docs')">
+          <div class="pc-icon">📁</div>
+          <h4>Centralised Documents</h4>
+          <p>Version-controlled library for all project files — always searchable and up to date.</p>
+          <span class="pc-arrow">View →</span>
+        </div>
+        <div class="pillar-card p3" onclick="showTab('comms')">
+          <div class="pc-icon">💬</div>
+          <h4>Communication Channels</h4>
+          <p>Dedicated channels per workstream so key messages never get lost.</p>
+          <span class="pc-arrow">View →</span>
+        </div>
+        <div class="metric-strip">
+          <div class="metric-box"><div class="mb-val">↓60%</div><div class="mb-desc">Less time searching for project information</div></div>
+          <div class="metric-box"><div class="mb-val">1</div><div class="mb-desc">Single source of truth — no conflicting versions</div></div>
+          <div class="metric-box"><div class="mb-val">↑40%</div><div class="mb-desc">Faster stakeholder response via structured comms</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHALLENGE -->
+    <div class="panel" id="panel-problem">
+      <div class="panel-header"><div><h3>The Challenge vs. The Solution</h3><p>Why we need a single controlled hub for all project information</p></div></div>
+      <div class="ps-grid">
+        <div class="ps-card prob">
+          <h3>❌ Today's Pain Points</h3>
+          <div class="ps-item"><span class="icon">📧</span><span class="text">Information scattered across emails, chats, and shared drives</span></div>
+          <div class="ps-item"><span class="icon">🔍</span><span class="text">No single view of project status or progress — hours wasted searching</span></div>
+          <div class="ps-item"><span class="icon">📄</span><span class="text">Critical documents hard to find or multiple conflicting versions exist</span></div>
+          <div class="ps-item"><span class="icon">🔇</span><span class="text">Communication in silos — key updates get missed by key people</span></div>
+          <div class="ps-item"><span class="icon">♻️</span><span class="text">Duplicated effort due to lack of team awareness</span></div>
+          <div class="ps-item"><span class="icon">👤</span><span class="text">Stakeholders left out of the loop on important changes</span></div>
+        </div>
+        <div class="ps-card soln">
+          <h3>✅ The Project Hub Fixes This</h3>
+          <div class="ps-item"><span class="icon">🏠</span><span class="text">One controlled space — all project assets live here and nowhere else</span></div>
+          <div class="ps-item"><span class="icon">📊</span><span class="text">Live dashboard with real-time status, milestones, and action tracking</span></div>
+          <div class="ps-item"><span class="icon">🗂️</span><span class="text">Version-controlled document library, always current and searchable</span></div>
+          <div class="ps-item"><span class="icon">📣</span><span class="text">Structured communication channels per workstream — nothing gets lost</span></div>
+          <div class="ps-item"><span class="icon">🔐</span><span class="text">Role-based access so the right people see the right content</span></div>
+          <div class="ps-item"><span class="icon">🔔</span><span class="text">Automatic notifications keep stakeholders informed without chasing</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="panel" id="panel-docs">
+      <div class="panel-header"><div><h3>Centralised Document Library</h3><p>All project documents in one searchable, version-controlled space</p></div></div>
+      <div class="doc-grid">
+        <div class="doc-cats">
+          <h4>Categories</h4>
+          <div class="cat-item active"    onclick="filterDocs(this,'all')">        <div class="cat-left">🗂️ All Files</div>    <span class="cat-count">6</span></div>
+          <div class="cat-item"           onclick="filterDocs(this,'governance')"> <div class="cat-left">📋 Governance</div>   <span class="cat-count">2</span></div>
+          <div class="cat-item"           onclick="filterDocs(this,'planning')">   <div class="cat-left">📅 Planning</div>     <span class="cat-count">2</span></div>
+          <div class="cat-item"           onclick="filterDocs(this,'reporting')">  <div class="cat-left">📈 Reporting</div>    <span class="cat-count">1</span></div>
+          <div class="cat-item"           onclick="filterDocs(this,'comms')">      <div class="cat-left">📣 Comms</div>        <span class="cat-count">1</span></div>
+        </div>
+        <div class="doc-list" id="doc-list">
+          <div class="doc-item" data-cat="governance"> <span class="doc-icon">📄</span> <div class="doc-info"><div class="di-name">Project Charter v2.1</div><div class="di-meta">PDF · Updated today · Sarah K.</div></div> <span class="doc-tag tag-new">NEW</span> </div>
+          <div class="doc-item" data-cat="planning">   <span class="doc-icon">📊</span> <div class="doc-info"><div class="di-name">Risk Register – Oct 2024</div><div class="di-meta">Excel · Updated yesterday · James T.</div></div> <span class="doc-tag tag-updated">UPDATED</span> </div>
+          <div class="doc-item" data-cat="comms">      <span class="doc-icon">📝</span> <div class="doc-info"><div class="di-name">Stakeholder Comms Plan</div><div class="di-meta">Word · Updated Monday · Laura M.</div></div> <span class="doc-tag tag-review">REVIEW</span> </div>
+          <div class="doc-item" data-cat="reporting">  <span class="doc-icon">📈</span> <div class="doc-info"><div class="di-name">Monthly Progress Report – Oct</div><div class="di-meta">PDF · Updated 28 Oct · Priya S.</div></div> <span class="doc-tag tag-new">NEW</span> </div>
+          <div class="doc-item" data-cat="planning">   <span class="doc-icon">📅</span> <div class="doc-info"><div class="di-name">Project Schedule v3</div><div class="di-meta">Excel · Updated 25 Oct · James T.</div></div> <span class="doc-tag tag-updated">UPDATED</span> </div>
+          <div class="doc-item" data-cat="governance"> <span class="doc-icon">🔐</span> <div class="doc-info"><div class="di-name">RACI Matrix</div><div class="di-meta">PDF · Updated 20 Oct · Sarah K.</div></div> <span class="doc-tag tag-updated">UPDATED</span> </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMUNICATION -->
+    <div class="panel" id="panel-comms">
+      <div class="panel-header"><div><h3>Communication Channels</h3><p>Structured, topic-based channels so nothing important gets missed</p></div></div>
+      <div class="comms-grid">
+        <div class="channel-list">
+          <h4>Channels</h4>
+          <div class="ch-item active" onclick="showChannel(this,'general')">   <span class="ch-name"># general</span>         <span class="ch-badge">3</span></div>
+          <div class="ch-item"        onclick="showChannel(this,'steering')">  <span class="ch-name"># steering-group</span>  </div>
+          <div class="ch-item"        onclick="showChannel(this,'delivery')">  <span class="ch-name"># delivery-team</span>   <span class="ch-badge">1</span></div>
+          <div class="ch-item"        onclick="showChannel(this,'risks')">     <span class="ch-name"># risks-issues</span>    </div>
+          <div class="ch-item"        onclick="showChannel(this,'comms-ch')">  <span class="ch-name"># comms-channel</span>  </div>
+        </div>
+        <div class="chat-area">
+          <div class="chat-header" id="chat-title">📢 # general</div>
+          <div class="chat-messages" id="chat-messages"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div class="panel" id="panel-roadmap">
+      <div class="panel-header"><div><h3>Delivery Roadmap</h3><p>9-week phased rollout — from foundation to full visibility</p></div></div>
+      <div class="phase-row">
+        <div class="phase-card">
+          <div class="ph-badge">Phase 1 · Weeks 1–3</div>
+          <h4>Foundation</h4>
+          <ul>
+            <li>Set up Hub structure &amp; access controls</li>
+            <li>Migrate all existing documents</li>
+            <li>Define naming &amp; folder conventions</li>
+            <li>Onboard core project team</li>
+          </ul>
+          <div class="phase-bar"><div class="phase-fill" id="pf1"></div></div>
+        </div>
+        <div class="phase-card">
+          <div class="ph-badge">Phase 2 · Weeks 4–6</div>
+          <h4>Communication Channels</h4>
+          <ul>
+            <li>Create all workstream channels</li>
+            <li>Establish announcement workflow</li>
+            <li>Configure notification preferences</li>
+            <li>Stakeholder onboarding sessions</li>
+          </ul>
+          <div class="phase-bar"><div class="phase-fill" id="pf2"></div></div>
+        </div>
+        <div class="phase-card">
+          <div class="ph-badge">Phase 3 · Weeks 7–9</div>
+          <h4>Visibility &amp; Reporting</h4>
+          <ul>
+            <li>Build live status dashboard</li>
+            <li>Integrate action tracker</li>
+            <li>Set up milestone progress views</li>
+            <li>Full team handover &amp; training</li>
+          </ul>
+          <div class="phase-bar"><div class="phase-fill" id="pf3"></div></div>
+        </div>
+      </div>
+      <div class="timeline">
+        <div class="tl-label">Programme Timeline</div>
+        <div class="tl-row">
+          <div class="tl-item"><div class="tl-dot done"></div>  <div class="tl-week">Wk 1</div><div class="tl-name">Kick-off</div></div>
+          <div class="tl-item"><div class="tl-dot done"></div>  <div class="tl-week">Wk 2</div><div class="tl-name">Doc Migration</div></div>
+          <div class="tl-item"><div class="tl-dot done"></div>  <div class="tl-week">Wk 3</div><div class="tl-name">Team Onboard</div></div>
+          <div class="tl-item"><div class="tl-dot done"></div>  <div class="tl-week">Wk 4</div><div class="tl-name">Channels Setup</div></div>
+          <div class="tl-item"><div class="tl-dot active"></div><div class="tl-week">Wk 5</div><div class="tl-name">Stakeholders</div></div>
+          <div class="tl-item"><div class="tl-dot"></div>       <div class="tl-week">Wk 6</div><div class="tl-name">Notifications</div></div>
+          <div class="tl-item"><div class="tl-dot"></div>       <div class="tl-week">Wk 7</div><div class="tl-name">Dashboard</div></div>
+          <div class="tl-item"><div class="tl-dot"></div>       <div class="tl-week">Wk 8</div><div class="tl-name">Actions</div></div>
+          <div class="tl-item"><div class="tl-dot"></div>       <div class="tl-week">Wk 9</div><div class="tl-name">Handover</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+</div>
+
+<script>
+  const tabMap = { overview:0, problem:1, docs:2, comms:3, roadmap:4 };
+
+  function showTab(id) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + id).classList.add('active');
+    document.querySelectorAll('.tab-btn')[tabMap[id]].classList.add('active');
+    if (id === 'overview') animateProgress('main-progress', 60);
+    if (id === 'comms')    loadChannel('general');
+    if (id === 'roadmap')  animateRoadmap();
+  }
+
+  function animateProgress(id, pct) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.width = '0';
+    setTimeout(() => el.style.width = pct + '%', 60);
+  }
+
+  function animateRoadmap() {
+    setTimeout(() => {
+      document.getElementById('pf1').style.width = '100%';
+      document.getElementById('pf1').style.background = '#3fb950';
+    }, 100);
+    setTimeout(() => document.getElementById('pf2').style.width = '60%', 300);
+    setTimeout(() => document.getElementById('pf3').style.width = '0%',  500);
+  }
+
+  function filterDocs(el, cat) {
+    document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.doc-item').forEach(d => {
+      d.style.display = (cat === 'all' || d.dataset.cat === cat) ? 'flex' : 'none';
+    });
+  }
+
+  const channels = {
+    general: {
+      title: '📢 # general',
+      messages: [
+        { author:'Sarah K.', color:'#3b82d4', time:'09:41', text:'Phase 2 kick-off confirmed for 14 Nov. All team members please check the updated schedule in Documents.', attach:'📅 Project Schedule v3.xlsx' },
+        { author:'James T.', color:'#7c5cd8', time:'09:55', text:'Risk register updated with the new supplier delay. See the Risks &amp; Issues channel for details.' },
+        { author:'Laura M.', color:'#1f9e6e', time:'10:12', text:'Stakeholder comms plan is ready for review — uploaded to the Documents library.' },
+      ]
+    },
+    steering: {
+      title: '🏛️ # steering-group',
+      messages: [
+        { author:'Sarah K.', color:'#3b82d4', time:'08:30', text:'Steering pack for this week uploaded. Please review prior to Thursday\'s session.', attach:'📄 Steering Pack – Nov 2024.pdf' },
+        { author:'Priya S.', color:'#f0883e', time:'08:45', text:'Noted — I will circulate the draft agenda by end of day today.' },
+      ]
+    },
+    delivery: {
+      title: '🚀 # delivery-team',
+      messages: [
+        { author:'James T.', color:'#7c5cd8', time:'08:00', text:'Sprint 6 review scheduled for Friday at 2pm. Please update your action statuses before then.' },
+        { author:'Tom B.',   color:'#e5534b', time:'08:20', text:'Integration testing environment is now live — access details in the pinned message.' },
+        { author:'Laura M.', color:'#1f9e6e', time:'09:05', text:'New comms template added to Documents. Please use for all external stakeholder messages.', attach:'📝 Comms Template v1.docx' },
+      ]
+    },
+    risks: {
+      title: '⚠️ # risks-issues',
+      messages: [
+        { author:'James T.', color:'#7c5cd8', time:'09:50', text:'New risk added: Supplier delivery delay may impact Phase 3 timeline. Risk rating: AMBER.' },
+        { author:'Sarah K.', color:'#3b82d4', time:'10:05', text:'Mitigation action raised and assigned to Tom. Due date: 08 Nov.' },
+      ]
+    },
+    'comms-ch': {
+      title: '📣 # comms-channel',
+      messages: [
+        { author:'Laura M.', color:'#1f9e6e', time:'11:00', text:'Monthly newsletter draft is ready. Feedback welcome by Friday.' },
+        { author:'Priya S.', color:'#f0883e', time:'11:30', text:'External stakeholder briefing slides attached for approval.', attach:'📊 Stakeholder Briefing – Nov.pptx' },
+      ]
+    }
+  };
+
+  function showChannel(el, id) {
+    document.querySelectorAll('.ch-item').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    loadChannel(id);
+  }
+
+  function loadChannel(id) {
+    const data = channels[id];
+    if (!data) return;
+    document.getElementById('chat-title').textContent = data.title;
+    document.getElementById('chat-messages').innerHTML = data.messages.map(m => `
+      <div class="msg">
+        <div class="msg-avatar" style="background:${m.color}">${m.author.split(' ').map(w=>w[0]).join('')}</div>
+        <div class="msg-body">
+          <div class="msg-meta"><span class="msg-author">${m.author}</span><span class="msg-time">${m.time}</span></div>
+          <div class="msg-text">${m.text}</div>
+          ${m.attach ? `<div class="msg-attachment">📎 ${m.attach}</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  // Init
+  loadChannel('general');
+  setTimeout(() => animateProgress('main-progress', 60), 400);
+</script>
+</body>
+</html>
